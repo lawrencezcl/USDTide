@@ -1,0 +1,710 @@
+<template>
+  <div class="wallet-connector">
+    <!-- Wallet Status Card -->
+    <van-card
+      v-if="showStatusCard"
+      class="wallet-status-card"
+      :class="{ 'connected': isConnected, 'disconnected': !isConnected }"
+    >
+      <template #thumb>
+        <van-icon
+          :name="isConnected ? 'checked' : 'warning-o'"
+          :color="isConnected ? '#07c160' : '#ee0a24'"
+          size="20"
+        />
+      </template>
+      
+      <template #title>
+        <span class="status-title">
+          {{ isConnected ? 'Wallet Connected' : 'Wallet Not Connected' }}
+        </span>
+      </template>
+      
+      <template #desc>
+        <div v-if="isConnected" class="connected-info">
+          <p class="address">{{ formatAddress(walletAddress) }}</p>
+          <p class="network">{{ networkName }}</p>
+        </div>
+        <div v-else class="disconnected-info">
+          <p>Connect your wallet to start using USDTide</p>
+        </div>
+      </template>
+      
+      <template #footer>
+        <van-button
+          v-if="!isConnected"
+          type="primary"
+          size="small"
+          @click="requestConnection"
+          :loading="isConnecting"
+        >
+          Connect Wallet
+        </van-button>
+        <van-button
+          v-else
+          type="default"
+          size="small"
+          @click="disconnect"
+        >
+          Disconnect
+        </van-button>
+      </template>
+    </van-card>
+
+    <!-- Balance Display -->
+    <div v-if="isConnected && showBalances" class="balance-section">
+      <van-grid :column-num="2" :border="false">
+        <van-grid-item>
+          <div class="balance-item">
+            <div class="balance-icon">
+              <img src="@/assets/usdt-icon.png" alt="USDT" />
+            </div>
+            <div class="balance-info">
+              <p class="balance-label">USDT Balance</p>
+              <p class="balance-value">
+                {{ formatBalance(usdtBalance, 6) }}
+                <span class="balance-unit">USDT</span>
+              </p>
+            </div>
+            <van-loading v-if="loadingBalances" size="16px" />
+          </div>
+        </van-grid-item>
+        
+        <van-grid-item>
+          <div class="balance-item">
+            <div class="balance-icon">
+              <img src="@/assets/kaia-icon.png" alt="KAIA" />
+            </div>
+            <div class="balance-info">
+              <p class="balance-label">KAIA Balance</p>
+              <p class="balance-value">
+                {{ formatBalance(kaiaBalance, 18) }}
+                <span class="balance-unit">KAIA</span>
+              </p>
+            </div>
+            <van-loading v-if="loadingBalances" size="16px" />
+          </div>
+        </van-grid-item>
+      </van-grid>
+    </div>
+
+    <!-- Permission Request Dialog -->
+    <van-dialog
+      v-model:show="showPermissionDialog"
+      title="Wallet Authorization Required"
+      :show-cancel-button="true"
+      confirm-button-text="Authorize"
+      cancel-button-text="Cancel"
+      @confirm="handlePermissionConfirm"
+      @cancel="handlePermissionCancel"
+    >
+      <div class="permission-content">
+        <van-icon name="shield-o" size="50" color="#1989fa" />
+        <p>USDTide needs access to your LINE Dapp Portal Wallet to:</p>
+        <ul>
+          <li>Check your USDT and KAIA balances</li>
+          <li>Execute staking and lending transactions</li>
+          <li>Display your transaction history</li>
+        </ul>
+        <p class="permission-note">
+          Your assets remain in your wallet. USDTide never has custody of your funds.
+        </p>
+      </div>
+    </van-dialog>
+
+    <!-- Transaction Status Toast -->
+    <van-overlay :show="showTransactionOverlay">
+      <div class="transaction-overlay">
+        <van-loading size="30px" color="#ffffff">
+          {{ transactionStatus }}
+        </van-loading>
+      </div>
+    </van-overlay>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { ethers } from 'ethers'
+import { showToast, showDialog } from 'vant'
+
+// Props
+const props = defineProps({
+  liff: {
+    type: Object,
+    default: null
+  },
+  autoConnect: {
+    type: Boolean,
+    default: true
+  },
+  showStatusCard: {
+    type: Boolean,
+    default: true
+  },
+  showBalances: {
+    type: Boolean,
+    default: true
+  },
+  refreshInterval: {
+    type: Number,
+    default: 30000 // 30 seconds
+  }
+})
+
+// Emits
+const emit = defineEmits([
+  'connected',
+  'disconnected',
+  'balanceUpdated',
+  'error',
+  'transactionStart',
+  'transactionComplete',
+  'transactionError'
+])
+
+// Environment configuration
+const config = {
+  chainId: parseInt(import.meta.env.VITE_CHAIN_ID || '1001'),
+  rpcUrl: import.meta.env.VITE_RPC_URL || 'https://public-node-testnet.kaia.io',
+  networkName: import.meta.env.VITE_NETWORK_NAME || 'Kaia Testnet',
+  usdtAddress: import.meta.env.VITE_USDT_TOKEN_ADDRESS,
+  kaiaAddress: import.meta.env.VITE_KAIA_TOKEN_ADDRESS,
+  stakingAddress: import.meta.env.VITE_STAKING_CONTRACT_ADDRESS,
+  lendingAddress: import.meta.env.VITE_LENDING_CONTRACT_ADDRESS
+}
+
+// Reactive state
+const isConnected = ref(false)
+const isConnecting = ref(false)
+const walletAddress = ref('')
+const networkName = ref(config.networkName)
+const usdtBalance = ref('0')
+const kaiaBalance = ref('0')
+const loadingBalances = ref(false)
+const showPermissionDialog = ref(false)
+const showTransactionOverlay = ref(false)
+const transactionStatus = ref('')
+
+// Blockchain instances
+const provider = ref(null)
+const signer = ref(null)
+const contracts = ref({
+  usdt: null,
+  kaia: null,
+  staking: null,
+  lending: null
+})
+
+// Auto-refresh interval
+let refreshTimer = null
+
+// Contract ABIs (minimal for balance checking)
+const ERC20_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function allowance(address owner, address spender) view returns (uint256)'
+]
+
+// Initialize provider
+const initializeProvider = () => {
+  try {
+    provider.value = new ethers.JsonRpcProvider(config.rpcUrl)
+    return true
+  } catch (error) {
+    console.error('Failed to initialize provider:', error)
+    return false
+  }
+}
+
+// Request wallet connection
+const requestConnection = async () => {
+  try {
+    isConnecting.value = true
+
+    if (!props.liff) {
+      throw new Error('LIFF not initialized')
+    }
+
+    // Check if ethereum is available
+    if (!window.ethereum) {
+      showPermissionDialog.value = true
+      return
+    }
+
+    // Request account access
+    const accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts'
+    })
+
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts found')
+    }
+
+    walletAddress.value = accounts[0]
+    
+    // Initialize signer
+    signer.value = new ethers.BrowserProvider(window.ethereum).getSigner()
+    
+    // Verify network
+    await verifyNetwork()
+    
+    // Initialize contracts
+    initializeContracts()
+    
+    // Load balances
+    await loadBalances()
+    
+    isConnected.value = true
+    
+    // Start auto-refresh
+    startAutoRefresh()
+    
+    emit('connected', {
+      address: walletAddress.value,
+      networkName: networkName.value
+    })
+    
+    showToast('Wallet connected successfully')
+    
+  } catch (error) {
+    console.error('Wallet connection failed:', error)
+    handleError(error)
+  } finally {
+    isConnecting.value = false
+  }
+}
+
+// Handle permission dialog
+const handlePermissionConfirm = async () => {
+  showPermissionDialog.value = false
+  
+  try {
+    // For LINE Dapp Portal Wallet integration
+    if (props.liff && props.liff.ethereum) {
+      const accounts = await props.liff.ethereum.request({
+        method: 'eth_requestAccounts'
+      })
+      
+      if (accounts && accounts.length > 0) {
+        walletAddress.value = accounts[0]
+        signer.value = new ethers.BrowserProvider(props.liff.ethereum).getSigner()
+        
+        await verifyNetwork()
+        initializeContracts()
+        await loadBalances()
+        
+        isConnected.value = true
+        startAutoRefresh()
+        
+        emit('connected', {
+          address: walletAddress.value,
+          networkName: networkName.value
+        })
+        
+        showToast('Wallet connected successfully')
+      }
+    } else {
+      showToast('LINE Dapp Portal Wallet not available')
+    }
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+const handlePermissionCancel = () => {
+  showPermissionDialog.value = false
+  showToast('Wallet connection cancelled')
+}
+
+// Verify network
+const verifyNetwork = async () => {
+  try {
+    const network = await provider.value.getNetwork()
+    if (Number(network.chainId) !== config.chainId) {
+      throw new Error(`Wrong network. Please switch to ${config.networkName}`)
+    }
+  } catch (error) {
+    throw new Error(`Network verification failed: ${error.message}`)
+  }
+}
+
+// Initialize contracts
+const initializeContracts = () => {
+  try {
+    if (!provider.value) return
+    
+    contracts.value = {
+      usdt: new ethers.Contract(config.usdtAddress, ERC20_ABI, provider.value),
+      kaia: new ethers.Contract(config.kaiaAddress, ERC20_ABI, provider.value),
+      staking: null, // Will be initialized when needed
+      lending: null  // Will be initialized when needed
+    }
+  } catch (error) {
+    console.error('Contract initialization failed:', error)
+  }
+}
+
+// Load balances
+const loadBalances = async () => {
+  if (!isConnected.value || !walletAddress.value) return
+  
+  try {
+    loadingBalances.value = true
+    
+    const [usdtBal, kaiaBal] = await Promise.all([
+      contracts.value.usdt.balanceOf(walletAddress.value),
+      provider.value.getBalance(walletAddress.value)
+    ])
+    
+    usdtBalance.value = usdtBal.toString()
+    kaiaBalance.value = kaiaBal.toString()
+    
+    emit('balanceUpdated', {
+      usdt: usdtBalance.value,
+      kaia: kaiaBalance.value,
+      address: walletAddress.value
+    })
+    
+  } catch (error) {
+    console.error('Failed to load balances:', error)
+  } finally {
+    loadingBalances.value = false
+  }
+}
+
+// Format address for display
+const formatAddress = (address) => {
+  if (!address) return ''
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
+// Format balance for display
+const formatBalance = (balance, decimals) => {
+  if (!balance || balance === '0') return '0.00'
+  
+  try {
+    const formatted = ethers.formatUnits(balance, decimals)
+    const num = parseFloat(formatted)
+    
+    if (num < 0.01) return '< 0.01'
+    if (num < 1) return num.toFixed(4)
+    if (num < 1000) return num.toFixed(2)
+    
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num)
+  } catch (error) {
+    console.error('Balance formatting error:', error)
+    return '0.00'
+  }
+}
+
+// Start auto-refresh
+const startAutoRefresh = () => {
+  if (refreshTimer) clearInterval(refreshTimer)
+  
+  refreshTimer = setInterval(() => {
+    if (isConnected.value) {
+      loadBalances()
+    }
+  }, props.refreshInterval)
+}
+
+// Stop auto-refresh
+const stopAutoRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+// Disconnect wallet
+const disconnect = () => {
+  isConnected.value = false
+  walletAddress.value = ''
+  usdtBalance.value = '0'
+  kaiaBalance.value = '0'
+  signer.value = null
+  
+  stopAutoRefresh()
+  
+  emit('disconnected')
+  showToast('Wallet disconnected')
+}
+
+// Execute transaction
+const executeTransaction = async (transaction, description = 'Transaction') => {
+  try {
+    showTransactionOverlay.value = true
+    transactionStatus.value = `Preparing ${description}...`
+    
+    emit('transactionStart', description)
+    
+    if (!signer.value) {
+      throw new Error('Wallet not connected')
+    }
+    
+    transactionStatus.value = `Confirming ${description}...`
+    
+    const tx = await transaction()
+    
+    transactionStatus.value = `Processing ${description}...`
+    
+    const receipt = await tx.wait()
+    
+    // Refresh balances after transaction
+    await loadBalances()
+    
+    emit('transactionComplete', {
+      hash: receipt.hash,
+      description
+    })
+    
+    showToast(`${description} completed successfully`)
+    
+    return receipt
+    
+  } catch (error) {
+    console.error(`${description} failed:`, error)
+    emit('transactionError', error)
+    handleError(error)
+    throw error
+  } finally {
+    showTransactionOverlay.value = false
+    transactionStatus.value = ''
+  }
+}
+
+// Handle errors
+const handleError = (error) => {
+  let message = 'An error occurred'
+  
+  if (error.code === 'ACTION_REJECTED') {
+    message = 'Transaction cancelled by user'
+  } else if (error.code === 'INSUFFICIENT_FUNDS') {
+    message = 'Insufficient funds for transaction'
+  } else if (error.code === 'NETWORK_ERROR') {
+    message = 'Network error. Please check your connection.'
+  } else if (error.message) {
+    message = error.message
+  }
+  
+  emit('error', error)
+  showToast(message)
+}
+
+// Get current signer
+const getSigner = () => signer.value
+
+// Get contract instance
+const getContract = (contractName) => contracts.value[contractName]
+
+// Expose methods to parent
+defineExpose({
+  connect: requestConnection,
+  disconnect,
+  loadBalances,
+  executeTransaction,
+  getSigner,
+  getContract,
+  isConnected,
+  walletAddress,
+  usdtBalance,
+  kaiaBalance
+})
+
+// Initialize on mount
+onMounted(() => {
+  initializeProvider()
+  
+  if (props.autoConnect && props.liff) {
+    requestConnection()
+  }
+})
+
+// Watch for LIFF changes
+watch(() => props.liff, (newLiff) => {
+  if (newLiff && props.autoConnect) {
+    requestConnection()
+  }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopAutoRefresh()
+})
+</script>
+
+<style scoped>
+.wallet-connector {
+  width: 100%;
+}
+
+.wallet-status-card {
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wallet-status-card.connected {
+  border: 1px solid #07c160;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.wallet-status-card.disconnected {
+  border: 1px solid #ee0a24;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.status-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.connected-info .address {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  color: #646566;
+  margin: 0.25rem 0;
+}
+
+.connected-info .network {
+  font-size: 0.8rem;
+  color: #969799;
+  margin: 0;
+}
+
+.disconnected-info p {
+  color: #646566;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.balance-section {
+  margin-top: 1rem;
+}
+
+.balance-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.balance-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.balance-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.balance-info {
+  flex: 1;
+}
+
+.balance-label {
+  font-size: 0.8rem;
+  color: #969799;
+  margin: 0 0 0.25rem 0;
+}
+
+.balance-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #323233;
+  margin: 0;
+}
+
+.balance-unit {
+  font-size: 0.9rem;
+  color: #969799;
+  font-weight: normal;
+}
+
+.permission-content {
+  text-align: center;
+  padding: 1rem;
+}
+
+.permission-content p {
+  margin: 1rem 0;
+  line-height: 1.5;
+  color: #646566;
+}
+
+.permission-content ul {
+  text-align: left;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.permission-content li {
+  margin: 0.5rem 0;
+  color: #646566;
+}
+
+.permission-note {
+  font-size: 0.85rem;
+  color: #969799;
+  background: #f7f8fa;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.transaction-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: white;
+  text-align: center;
+  flex-direction: column;
+}
+
+/* Mobile optimizations */
+@media (max-width: 414px) {
+  .balance-item {
+    padding: 0.75rem;
+  }
+  
+  .balance-icon {
+    width: 36px;
+    height: 36px;
+    margin-right: 0.5rem;
+  }
+  
+  .balance-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .balance-item {
+    padding: 0.5rem;
+  }
+  
+  .balance-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .balance-value {
+    font-size: 0.95rem;
+  }
+}
+</style>

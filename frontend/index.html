@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#667eea" />
+  <meta name="apple-mobile-web-app-title" content="USDTide" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://usdtide.xyz/" />
+  <meta property="og:title" content="USDTide - Kaia Ecosystem DeFi Tool" />
+  <meta property="og:description" content="A lightweight DeFi gateway within the LINE ecosystem, making stablecoin value flow more naturally" />
+  <meta property="og:image" content="https://usdtide.xyz/og-image.png" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://usdtide.xyz/" />
+  <meta property="twitter:title" content="USDTide - Kaia Ecosystem DeFi Tool" />
+  <meta property="twitter:description" content="A lightweight DeFi gateway within the LINE ecosystem, making stablecoin value flow more naturally" />
+  <meta property="twitter:image" content="https://usdtide.xyz/og-image.png" />
+  
+  <!-- LINE Meta Tags -->
+  <meta property="line:app:name" content="USDTide" />
+  <meta property="line:app:description" content="Kaia Ecosystem DeFi Tool" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  
+  <!-- Preconnect to improve performance -->
+  <link rel="preconnect" href="https://public-node-testnet.kaia.io" />
+  <link rel="preconnect" href="https://static.line-scdn.net" />
+  
+  <!-- Critical CSS will be inlined here by Vite -->
+  <style>
+    /* Critical loading styles */
+    #app {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .initial-loading {
+      text-align: center;
+      color: white;
+    }
+    
+    .initial-loading h1 {
+      font-size: 2rem;
+      margin: 0 0 1rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #ffd700, #ffeb3b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .initial-loading p {
+      margin: 0;
+      opacity: 0.9;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin: 2rem auto;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Hide initial loading once Vue is mounted */
+    .vue-mounted .initial-loading {
+      display: none;
+    }
+  </style>
+  
+  <title>USDTide - Kaia Ecosystem DeFi Tool</title>
+  
+  <!-- Environment variables for client -->
+  <script>
+    window.__USDTIDE_ENV__ = {
+      VITE_LIFF_ID: '%VITE_LIFF_ID%',
+      VITE_CHAIN_ID: '%VITE_CHAIN_ID%',
+      VITE_RPC_URL: '%VITE_RPC_URL%',
+      VITE_NETWORK_NAME: '%VITE_NETWORK_NAME%',
+      VITE_USDT_TOKEN_ADDRESS: '%VITE_USDT_TOKEN_ADDRESS%',
+      VITE_KAIA_TOKEN_ADDRESS: '%VITE_KAIA_TOKEN_ADDRESS%',
+      VITE_STAKING_CONTRACT_ADDRESS: '%VITE_STAKING_CONTRACT_ADDRESS%',
+      VITE_LENDING_CONTRACT_ADDRESS: '%VITE_LENDING_CONTRACT_ADDRESS%'
+    };
+  </script>
+</head>
+<body>
+  <div id="app">
+    <!-- Initial loading screen shown until Vue app mounts -->
+    <div class="initial-loading">
+      <h1>USDTide</h1>
+      <p>Kaia Ecosystem DeFi Tool</p>
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+  </div>
+  
+  <!-- LINE LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- Main application script -->
+  <script type="module" src="/src/main.js"></script>
+  
+  <!-- Error handling for older browsers -->
+  <script nomodule>
+    document.getElementById('app').innerHTML = `
+      <div style="text-align: center; padding: 2rem; font-family: sans-serif;">
+        <h1>Browser Not Supported</h1>
+        <p>Please update your browser to use USDTide.</p>
+        <p>Supported browsers: Chrome 63+, Firefox 67+, Safari 11.1+, Edge 79+</p>
+      </div>
+    `;
+  </script>
+  
+  <!-- Service Worker registration -->
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+  
+  <!-- Analytics (can be added later) -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
+</body>
+</html>

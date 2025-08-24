@@ -1,0 +1,30 @@
+{
+  "name": "usdtide",
+  "version": "1.0.0",
+  "description": "A lightweight DeFi gateway within the LINE ecosystem for Kaia-native USDT liquidity",
+  "keywords": ["DeFi", "LINE", "MiniDapp", "Kaia", "USDT", "Staking", "Lending"],
+  "author": "USDTide Team",
+  "license": "MIT",
+  "workspaces": [
+    "frontend",
+    "contracts"
+  ],
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "contracts": "cd contracts && npm run compile",
+    "test": "cd contracts && npm run test",
+    "deploy:testnet": "cd contracts && npm run deploy:kaia-testnet",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
