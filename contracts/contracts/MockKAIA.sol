@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @notice This is a test token with 18 decimals to match real KAIA
  */
 contract MockKAIA is ERC20, Ownable {
-    constructor() ERC20("Mock KAIA", "mKAIA") {
+    constructor() ERC20("Mock KAIA", "mKAIA") Ownable(msg.sender) {
         // Mint 1 million KAIA for testing
         _mint(msg.sender, 1000000 * 10**18);
     }

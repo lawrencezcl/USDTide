@@ -1,0 +1,162 @@
+// SCSS Variables for USDTide
+// LINE MiniDapp design system and responsive breakpoints
+
+// Colors - LINE Design System
+$primary-color: #1989fa;
+$primary-light: #73c0f4;
+$primary-dark: #1c7cd6;
+
+$success-color: #07c160;
+$success-light: #39d374;
+$success-dark: #06a050;
+
+$warning-color: #ff976a;
+$warning-light: #ffb08a;
+$warning-dark: #f78c55;
+
+$danger-color: #ee0a24;
+$danger-light: #ff4757;
+$danger-dark: #c44569;
+
+$info-color: #1989fa;
+$gray-color: #969799;
+$gray-light: #c8c9cc;
+$gray-dark: #646566;
+
+// Text colors
+$text-primary: #323233;
+$text-secondary: #646566;
+$text-muted: #969799;
+$text-white: #ffffff;
+
+// Background colors
+$bg-white: #ffffff;
+$bg-gray: #f7f8fa;
+$bg-light: #fafafa;
+$bg-dark: #323233;
+
+// Border colors
+$border-light: #ebedf0;
+$border-normal: #dcdee0;
+$border-dark: #c8c9cc;
+
+// Spacing system (rem-based for mobile scaling)
+$spacing-xs: 0.25rem;  // 4px
+$spacing-sm: 0.5rem;   // 8px
+$spacing-md: 0.75rem;  // 12px
+$spacing-lg: 1rem;     // 16px
+$spacing-xl: 1.25rem;  // 20px
+$spacing-2xl: 1.5rem;  // 24px
+$spacing-3xl: 2rem;    // 32px
+
+// Font sizes (mobile-optimized)
+$font-xs: 0.75rem;   // 12px
+$font-sm: 0.875rem;  // 14px
+$font-md: 1rem;      // 16px
+$font-lg: 1.125rem;  // 18px
+$font-xl: 1.25rem;   // 20px
+$font-2xl: 1.5rem;   // 24px
+$font-3xl: 2rem;     // 32px
+
+// Font weights
+$font-light: 300;
+$font-normal: 400;
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+
+// Line heights
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// Border radius
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-full: 50%;
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+// Breakpoints (mobile-first)
+$breakpoint-xs: 320px;   // Small phones
+$breakpoint-sm: 375px;   // Standard phones
+$breakpoint-md: 414px;   // Large phones / LINE MiniDapp max
+$breakpoint-lg: 768px;   // Tablets
+$breakpoint-xl: 1024px;  // Desktop
+
+// Z-index layers
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+// Animation durations
+$duration-fast: 0.15s;
+$duration-normal: 0.3s;
+$duration-slow: 0.5s;
+
+// Transitions
+$transition-fast: all $duration-fast ease;
+$transition-normal: all $duration-normal ease;
+$transition-slow: all $duration-slow ease;
+
+// Component specific variables
+
+// Card
+$card-padding: $spacing-lg;
+$card-radius: $radius-lg;
+$card-shadow: $shadow-md;
+
+// Button
+$button-height-sm: 32px;
+$button-height-md: 40px;
+$button-height-lg: 48px;
+$button-radius: $radius-md;
+
+// Input
+$input-height: 44px;
+$input-padding: $spacing-md $spacing-lg;
+$input-radius: $radius-md;
+$input-border: 1px solid $border-light;
+
+// Navigation
+$navbar-height: 46px;
+$tabbar-height: 50px;
+
+// Container
+$container-max-width: $breakpoint-md;
+$container-padding: $spacing-lg;
+
+// LINE specific
+$line-green: #00c300;
+$line-green-light: #39d374;
+$line-green-dark: #00a000;
+
+// Gradient backgrounds
+$gradient-primary: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+$gradient-success: linear-gradient(135deg, $success-color 0%, $success-dark 100%);
+$gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+// Opacity levels
+$opacity-disabled: 0.5;
+$opacity-muted: 0.7;
+$opacity-overlay: 0.8;
+
+// Maximum widths for content
+$content-max-width: 600px;
+$text-max-width: 65ch;
+
+// Safe area insets for notched devices
+$safe-area-top: env(safe-area-inset-top);
+$safe-area-bottom: env(safe-area-inset-bottom);
+$safe-area-left: env(safe-area-inset-left);
+$safe-area-right: env(safe-area-inset-right);

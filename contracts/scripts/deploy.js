@@ -14,44 +14,44 @@ async function main() {
   
   const MockUSDT = await ethers.getContractFactory("MockUSDT");
   const mockUSDT = await MockUSDT.deploy();
-  await mockUSDT.deployed();
-  console.log("MockUSDT deployed to:", mockUSDT.address);
+  await mockUSDT.waitForDeployment();
+  console.log("MockUSDT deployed to:", await mockUSDT.getAddress());
 
   const MockKAIA = await ethers.getContractFactory("MockKAIA");
   const mockKAIA = await MockKAIA.deploy();
-  await mockKAIA.deployed();
-  console.log("MockKAIA deployed to:", mockKAIA.address);
+  await mockKAIA.waitForDeployment();
+  console.log("MockKAIA deployed to:", await mockKAIA.getAddress());
 
   // Deploy USDTStaking contract
   console.log("\n=== Deploying USDTStaking ===");
   const USDTStaking = await ethers.getContractFactory("USDTStaking");
-  const usdtStaking = await USDTStaking.deploy(mockUSDT.address);
-  await usdtStaking.deployed();
-  console.log("USDTStaking deployed to:", usdtStaking.address);
+  const usdtStaking = await USDTStaking.deploy(await mockUSDT.getAddress());
+  await usdtStaking.waitForDeployment();
+  console.log("USDTStaking deployed to:", await usdtStaking.getAddress());
 
   // Deploy USDTLending contract
   console.log("\n=== Deploying USDTLending ===");
   const USDTLending = await ethers.getContractFactory("USDTLending");
   const usdtLending = await USDTLending.deploy(
-    mockUSDT.address,
-    mockKAIA.address,
-    usdtStaking.address
+    await mockUSDT.getAddress(),
+    await mockKAIA.getAddress(),
+    await usdtStaking.getAddress()
   );
-  await usdtLending.deployed();
-  console.log("USDTLending deployed to:", usdtLending.address);
+  await usdtLending.waitForDeployment();
+  console.log("USDTLending deployed to:", await usdtLending.getAddress());
 
   // Setup initial configuration
   console.log("\n=== Setting up initial configuration ===");
   
   // Add rewards to staking contract (100,000 USDT)
-  const rewardAmount = ethers.utils.parseUnits("100000", 6); // 6 decimals for USDT
-  await mockUSDT.approve(usdtStaking.address, rewardAmount);
+  const rewardAmount = ethers.parseUnits("100000", 6); // 6 decimals for USDT
+  await mockUSDT.approve(await usdtStaking.getAddress(), rewardAmount);
   await usdtStaking.addRewards(rewardAmount);
   console.log("Added 100,000 USDT to staking rewards");
 
   // Add KAIA reserve to lending contract (50,000 KAIA)
-  const reserveAmount = ethers.utils.parseEther("50000");
-  await mockKAIA.approve(usdtLending.address, reserveAmount);
+  const reserveAmount = ethers.parseEther("50000");
+  await mockKAIA.approve(await usdtLending.getAddress(), reserveAmount);
   await usdtLending.addReserve(reserveAmount);
   console.log("Added 50,000 KAIA to lending reserve");
 
@@ -61,16 +61,16 @@ async function main() {
     chainId: (await ethers.provider.getNetwork()).chainId,
     deployer: deployer.address,
     contracts: {
-      MockUSDT: mockUSDT.address,
-      MockKAIA: mockKAIA.address,
-      USDTStaking: usdtStaking.address,
-      USDTLending: usdtLending.address,
+      MockUSDT: await mockUSDT.getAddress(),
+      MockKAIA: await mockKAIA.getAddress(),
+      USDTStaking: await usdtStaking.getAddress(),
+      USDTLending: await usdtLending.getAddress(),
     },
     blockNumbers: {
-      MockUSDT: mockUSDT.deployTransaction.blockNumber,
-      MockKAIA: mockKAIA.deployTransaction.blockNumber,
-      USDTStaking: usdtStaking.deployTransaction.blockNumber,
-      USDTLending: usdtLending.deployTransaction.blockNumber,
+      MockUSDT: (await mockUSDT.deploymentTransaction()).blockNumber,
+      MockKAIA: (await mockKAIA.deploymentTransaction()).blockNumber,
+      USDTStaking: (await usdtStaking.deploymentTransaction()).blockNumber,
+      USDTLending: (await usdtLending.deploymentTransaction()).blockNumber,
     },
     timestamp: new Date().toISOString(),
   };
@@ -92,18 +92,18 @@ async function main() {
   console.log("Chain ID:", deploymentInfo.chainId);
   console.log("Deployer:", deployer.address);
   console.log("\nContract Addresses:");
-  console.log("MockUSDT:", mockUSDT.address);
-  console.log("MockKAIA:", mockKAIA.address);
-  console.log("USDTStaking:", usdtStaking.address);
-  console.log("USDTLending:", usdtLending.address);
+  console.log("MockUSDT:", await mockUSDT.getAddress());
+  console.log("MockKAIA:", await mockKAIA.getAddress());
+  console.log("USDTStaking:", await usdtStaking.getAddress());
+  console.log("USDTLending:", await usdtLending.getAddress());
   console.log("\nDeployment info saved to:", deploymentFile);
 
   // Generate .env file for frontend
   const envContent = `# USDTide Contract Addresses - ${hre.network.name}
-VITE_USDT_TOKEN_ADDRESS=${mockUSDT.address}
-VITE_KAIA_TOKEN_ADDRESS=${mockKAIA.address}
-VITE_STAKING_CONTRACT_ADDRESS=${usdtStaking.address}
-VITE_LENDING_CONTRACT_ADDRESS=${usdtLending.address}
+VITE_USDT_TOKEN_ADDRESS=${await mockUSDT.getAddress()}
+VITE_KAIA_TOKEN_ADDRESS=${await mockKAIA.getAddress()}
+VITE_STAKING_CONTRACT_ADDRESS=${await usdtStaking.getAddress()}
+VITE_LENDING_CONTRACT_ADDRESS=${await usdtLending.getAddress()}
 VITE_NETWORK_NAME=${hre.network.name}
 VITE_CHAIN_ID=${deploymentInfo.chainId}
 VITE_RPC_URL=${hre.network.config.url || 'https://public-node-testnet.kaia.io'}

@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 interface IUSDTStaking {
     function getStakedAmount(address user) external view returns (uint256);
@@ -96,7 +96,7 @@ contract USDTLending is Ownable, ReentrancyGuard, Pausable {
         address _usdtToken,
         address _kaiaToken,
         address _stakingContract
-    ) {
+    ) Ownable(msg.sender) {
         require(_usdtToken != address(0), "Invalid USDT token address");
         require(_kaiaToken != address(0), "Invalid KAIA token address");
         require(_stakingContract != address(0), "Invalid staking contract address");

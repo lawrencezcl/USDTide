@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title USDTStaking
@@ -62,7 +62,7 @@ contract USDTStaking is Ownable, ReentrancyGuard, Pausable {
      * @dev Constructor
      * @param _usdtToken Address of the USDT token contract
      */
-    constructor(address _usdtToken) {
+    constructor(address _usdtToken) Ownable(msg.sender) {
         require(_usdtToken != address(0), "Invalid USDT token address");
         usdtToken = IERC20(_usdtToken);
         

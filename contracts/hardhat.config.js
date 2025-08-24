@@ -43,16 +43,16 @@ module.exports = {
         network: "kaia-testnet",
         chainId: 1001,
         urls: {
-          apiURL: "https://api-baobab.scope.klaytn.com/api",
-          browserURL: "https://baobab.scope.klaytn.com/",
+          apiURL: "https://api-baobab.klaytnscope.com/api",
+          browserURL: "https://baobab.klaytnscope.com/",
         },
       },
       {
-        network: "kaia-mainnet",
+        network: "kaia-mainnet", 
         chainId: 8217,
         urls: {
-          apiURL: "https://api.scope.klaytn.com/api",
-          browserURL: "https://scope.klaytn.com/",
+          apiURL: "https://api.klaytnscope.com/api",
+          browserURL: "https://klaytnscope.com/",
         },
       },
     ],
