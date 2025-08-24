@@ -287,8 +287,6 @@ async function main() {
   console.log('📋 Review the suggestions above to improve your app\'s performance')
 }
 
-// Utility functions
-
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
@@ -303,4 +301,5 @@ export {
   analyzeLoadPerformance, 
   suggestOptimizations, 
   runLighthouseAudit
+  // REMOVED formatBytes from export as it's already available within the module
 }
