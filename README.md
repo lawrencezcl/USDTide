@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kaia Testnet](https://img.shields.io/badge/Network-Kaia%20Testnet-blue)](https://docs.kaia.io/)
 [![LINE MiniDapp](https://img.shields.io/badge/Platform-LINE%20MiniDapp-green)](https://developers.line.biz/en/docs/mini-app/)
+[![GitHub](https://img.shields.io/badge/Repository-GitHub-black)](https://github.com/lawrencezcl/USDTide)
 
 ## 🎯 Project Overview
 
