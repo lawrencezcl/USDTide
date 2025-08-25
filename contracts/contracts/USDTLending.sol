@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 interface IUSDTStaking {
     function getStakedAmount(address user) external view returns (uint256);
@@ -96,7 +96,7 @@ contract USDTLending is Ownable, ReentrancyGuard, Pausable {
         address _usdtToken,
         address _kaiaToken,
         address _stakingContract
-    ) {
+    ) Ownable(msg.sender) {
         require(_usdtToken != address(0), "Invalid USDT token address");
         require(_kaiaToken != address(0), "Invalid KAIA token address");
         require(_stakingContract != address(0), "Invalid staking contract address");
@@ -125,8 +125,10 @@ contract USDTLending is Ownable, ReentrancyGuard, Pausable {
 
         // Calculate required collateral in USDT
         uint256 requiredCollateral = (_kaiaAmount * BASIS_POINTS) / COLLATERAL_RATIO;
-        // Convert KAIA to USDT using exchange rate
-        requiredCollateral = (requiredCollateral * 10**18) / usdtKaiaExchangeRate;
+        // Convert KAIA (18 decimals) to USDT (6 decimals) using exchange rate
+        // usdtKaiaExchangeRate is 10^18 for 1:1 ratio, representing 18 decimal precision.
+        // We need to adjust for USDT's 6 decimals.
+        requiredCollateral = (requiredCollateral * (10**6)) / usdtKaiaExchangeRate;
         
         // Check if user has enough available collateral
         uint256 availableCollateral = userStaked - totalCollateral[msg.sender];
@@ -264,10 +266,10 @@ contract USDTLending is Ownable, ReentrancyGuard, Pausable {
         if (!loan.isActive) return 0;
 
         uint256 timeElapsed = block.timestamp - loan.borrowTime;
-        uint256 days = timeElapsed / 1 days;
+        uint256 daysPassed = timeElapsed / 1 days;
         
         // Calculate interest: principal * daily_rate * days / 10000
-        return (loan.kaiaAmount * loan.interestRate * days) / BASIS_POINTS;
+        return (loan.kaiaAmount * loan.interestRate * daysPassed) / BASIS_POINTS;
     }
 
     /**
@@ -281,7 +283,7 @@ contract USDTLending is Ownable, ReentrancyGuard, Pausable {
         if (availableCollateral == 0) return 0;
         
         // Calculate max KAIA amount based on available collateral
-        uint256 maxKaia = (availableCollateral * COLLATERAL_RATIO * usdtKaiaExchangeRate) / (BASIS_POINTS * 10**18);
+        uint256 maxKaia = (availableCollateral * COLLATERAL_RATIO * usdtKaiaExchangeRate) / (BASIS_POINTS * 10**6);
         
         return maxKaia > kaiaReserve ? kaiaReserve : maxKaia;
     }

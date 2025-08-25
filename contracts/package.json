@@ -14,7 +14,15 @@
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
     "format": "prettier --write 'contracts/**/*.sol'"
   },
-  "keywords": ["DeFi", "Solidity", "Hardhat", "Kaia", "USDT", "Staking", "Lending"],
+  "keywords": [
+    "DeFi",
+    "Solidity",
+    "Hardhat",
+    "Kaia",
+    "USDT",
+    "Staking",
+    "Lending"
+  ],
   "author": "USDTide Team",
   "license": "MIT",
   "devDependencies": {
@@ -30,15 +38,16 @@
     "ethers": "^6.4.0",
     "hardhat": "^2.19.0",
     "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.8.1",
-    "typechain": "^8.3.0",
-    "ts-node": ">=8.0.0",
-    "typescript": ">=4.5.0",
-    "solhint": "^4.0.0",
     "prettier": "^3.0.0",
-    "prettier-plugin-solidity": "^1.1.0"
+    "prettier-plugin-solidity": "^1.1.0",
+    "solhint": "^4.0.0",
+    "solidity-coverage": "^0.8.1",
+    "ts-node": ">=8.0.0",
+    "typechain": "^8.3.0",
+    "typescript": ">=4.5.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0"
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^17.2.1"
   }
 }

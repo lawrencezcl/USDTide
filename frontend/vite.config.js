@@ -5,6 +5,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
 import eslint from 'vite-plugin-eslint'
+import autoprefixer from 'autoprefixer'
 
 export default defineConfig({
   plugins: [
@@ -14,8 +15,7 @@ export default defineConfig({
       imports: [
         'vue',
         'vue-router',
-        'pinia',
-        '@vueuse/core'
+        'pinia'
       ],
       dts: true
     }),
@@ -38,7 +38,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require('autoprefixer')
+        autoprefixer
       ]
     },
     preprocessorOptions: {
