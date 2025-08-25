@@ -22,7 +22,7 @@ module.exports = {
       chainId: 1337,
     },
     "kaia-testnet": {
-      url: "https://public-node-testnet.kaia.io",
+      url: "https://public-en-kairos.node.kaia.io",
       chainId: 1001,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 25000000000, // 25 gwei
