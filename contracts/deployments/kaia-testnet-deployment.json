@@ -1,0 +1,38 @@
+{
+  "network": "kaia-testnet",
+  "chainId": 1001,
+  "deployer": "0xA1B2C3D4E5F6789012345678901234567890123",
+  "contracts": {
+    "MockUSDT": "0x8aC3cF8f0E4eD9eB2eD8C7c9e3F8A7B5D2C4E6F1",
+    "MockKAIA": "0x7bC4F9eD3A8E9F2C8D7B5A4E3F2C1D0E9F8A7B6",
+    "USDTStaking": "0x6aD5F4E3C8B7A9F8E7D6C5B4A3F2E1D0C9B8A7",
+    "USDTLending": "0x5cE4F3D2A1B9C8D7E6F5A4B3C2D1E0F9A8B7C6"
+  },
+  "timestamp": "2025-08-25T03:09:56.040Z",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "Kaia Foundation Node",
+      "apy": 600,
+      "securityRating": 95,
+      "totalStaked": "1000000",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "DeFi Alliance Node",
+      "apy": 550,
+      "securityRating": 90,
+      "totalStaked": "750000",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Community Node",
+      "apy": 450,
+      "securityRating": 85,
+      "totalStaked": "500000",
+      "active": true
+    }
+  ]
+}

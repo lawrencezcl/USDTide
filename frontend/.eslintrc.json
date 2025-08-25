@@ -1,0 +1,30 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:vue/vue3-recommended",
+    "@vue/eslint-config-prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "rules": {
+    "vue/multi-word-component-names": "off",
+    "vue/no-unused-vars": "warn",
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "no-debugger": "off"
+  },
+  "globals": {
+    "defineEmits": "readonly",
+    "defineProps": "readonly",
+    "defineExpose": "readonly",
+    "withDefaults": "readonly"
+  }
+}

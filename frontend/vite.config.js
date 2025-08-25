@@ -4,13 +4,13 @@ import { resolve } from 'path'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VantResolver } from 'unplugin-vue-components/resolvers'
-import eslint from 'vite-plugin-eslint'
+// import eslint from 'vite-plugin-eslint'
 import autoprefixer from 'autoprefixer'
 
 export default defineConfig({
   plugins: [
     vue(),
-    eslint(),
+    // eslint(),
     AutoImport({
       imports: [
         'vue',

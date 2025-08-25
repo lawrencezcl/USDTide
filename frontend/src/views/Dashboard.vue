@@ -1,5 +1,8 @@
 <template>
   <div class="dashboard">
+    <!-- Transaction Monitor Component -->
+    <TransactionMonitor :wallet-connector="walletConnector" />
+    
     <!-- Header Section -->
     <div class="header-section">
       <div class="welcome-card">
@@ -160,6 +163,9 @@
       </div>
     </div>
 
+    <!-- Social Features Component -->
+    <SocialFeatures :wallet-connector="walletConnector" />
+    
     <!-- Market Info -->
     <div class="market-section">
       <h3 class="section-title">Market Information</h3>
@@ -197,6 +203,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ethers } from 'ethers'
 import { showToast } from 'vant'
+import TransactionMonitor from '@/components/TransactionMonitor.vue'
+import SocialFeatures from '@/components/SocialFeatures.vue'
 
 // Props
 const props = defineProps({

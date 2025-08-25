@@ -53,7 +53,6 @@ import {
   ContactList,
   ContactEdit,
   Calendar,
-  DatetimePicker,
   Area,
   PasswordInput,
   NumberKeyboard,
@@ -401,7 +400,6 @@ app.use(ContactCard)
 app.use(ContactList)
 app.use(ContactEdit)
 app.use(Calendar)
-app.use(DatetimePicker)
 app.use(Area)
 app.use(PasswordInput)
 app.use(NumberKeyboard)

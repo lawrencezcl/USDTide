@@ -1,0 +1,152 @@
+// USDTide SCSS Variables
+// Color palette for the USDT staking and lending platform
+
+// Primary Colors
+$primary-color: #1989fa;
+$primary-hover: #0056b3;
+$primary-light: rgba(25, 137, 250, 0.1);
+
+// Success Colors
+$success-color: #07c160;
+$success-hover: #059142;
+$success-light: rgba(7, 193, 96, 0.1);
+
+// Warning Colors
+$warning-color: #ff976a;
+$warning-hover: #ff6b35;
+$warning-light: rgba(255, 151, 106, 0.1);
+
+// Danger Colors
+$danger-color: #ee0a24;
+$danger-hover: #cc0a20;
+$danger-light: rgba(238, 10, 36, 0.1);
+
+// Neutral Colors
+$white: #ffffff;
+$black: #000000;
+$gray-1: #f7f8fa;
+$gray-2: #f2f3f5;
+$gray-3: #ebedf0;
+$gray-4: #dcdee0;
+$gray-5: #c8c9cc;
+$gray-6: #969799;
+$gray-7: #646566;
+$gray-8: #323233;
+
+// Text Colors
+$text-primary: #323233;
+$text-secondary: #646566;
+$text-tertiary: #969799;
+$text-disabled: #c8c9cc;
+
+// Background Colors
+$bg-primary: #ffffff;
+$bg-secondary: #f7f8fa;
+$bg-tertiary: #f2f3f5;
+
+// Border Colors
+$border-color: #ebedf0;
+$border-color-light: #f2f3f5;
+
+// Spacing Scale (rem-based for mobile responsiveness)
+$spacing-xs: 0.25rem;   // 4px
+$spacing-sm: 0.5rem;    // 8px
+$spacing-md: 0.75rem;   // 12px
+$spacing-lg: 1rem;      // 16px
+$spacing-xl: 1.25rem;   // 20px
+$spacing-2xl: 1.5rem;   // 24px
+$spacing-3xl: 2rem;     // 32px
+$spacing-4xl: 2.5rem;   // 40px
+
+// Font Sizes
+$font-size-xs: 0.75rem;     // 12px
+$font-size-sm: 0.875rem;    // 14px
+$font-size-base: 1rem;      // 16px
+$font-size-lg: 1.125rem;    // 18px
+$font-size-xl: 1.25rem;     // 20px
+$font-size-2xl: 1.5rem;     // 24px
+$font-size-3xl: 1.75rem;    // 28px
+$font-size-4xl: 2rem;       // 32px
+
+// Font Weights
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Line Heights
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// Border Radius
+$border-radius-sm: 0.25rem;   // 4px
+$border-radius-md: 0.5rem;     // 8px
+$border-radius-lg: 0.75rem;    // 12px
+$border-radius-xl: 1rem;       // 16px
+$border-radius-full: 50%;
+
+// Shadows
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+// Z-Index Scale
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+// Breakpoints
+$breakpoint-xs: 320px;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+// LINE MiniDapp specific
+$minidapp-max-width: 414px;
+$minidapp-header-height: 44px;
+$minidapp-tabbar-height: 50px;
+
+// Animation
+$transition-duration: 0.3s;
+$transition-timing: ease-in-out;
+
+// Button Sizes
+$btn-height-sm: 1.75rem;    // 28px
+$btn-height-md: 2rem;       // 32px
+$btn-height-lg: 2.25rem;    // 36px
+
+// Input Sizes
+$input-height-sm: 1.75rem;  // 28px
+$input-height-md: 2rem;      // 32px
+$input-height-lg: 2.25rem;   // 36px
+
+// Card Styles
+$card-padding: 1rem;
+$card-border-radius: 0.5rem;
+$card-shadow: $shadow-md;
+
+// Progress Bar
+$progress-height: 0.25rem;
+$progress-border-radius: 0.125rem;
+
+// Badge
+$badge-size: 1rem;
+$badge-dot-size: 0.5rem;
+
+// Avatar
+$avatar-size-sm: 2rem;      // 32px
+$avatar-size-md: 2.5rem;    // 40px
+$avatar-size-lg: 3rem;      // 48px
+
+// Loading
+$loading-size-sm: 1.25rem;  // 20px
+$loading-size-md: 1.875rem;  // 30px
+$loading-size-lg: 2.5rem;    // 40px
