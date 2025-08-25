@@ -1,18 +1,6 @@
 <template>
   <div class="dashboard">
-    <div v-if="loading && !props.walletConnector?.isConnected" class="loading-spinner">
-      <van-loading type="spinner" size="50px" />
-      <p>Loading dashboard...</p>
-    </div>
-    
-    <div v-if="!props.walletConnector?.isConnected" class="empty-state">
-      <van-empty
-        image="network"
-        description="Please connect your wallet to view dashboard"
-      />
-    </div>
-
-    <div v-else>
+    <div>
       <!-- Transaction Monitor Component -->
       <TransactionMonitor :wallet-connector="walletConnector" />
     
@@ -224,7 +212,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ethers } from 'ethers'
 import { showToast } from 'vant'
@@ -245,23 +233,59 @@ const emit = defineEmits(['update-title'])
 // Router
 const router = useRouter()
 
-// Reactive state
+// Reactive state – initialized with mock demo data
 const refreshing = ref(false)
 const loading = ref(false)
-const usdtBalance = ref('0')
-const kaiaBalance = ref('0')
-const stakedAmount = ref('0')
-const earnedRewards = ref('0')
-const borrowedAmount = ref('0')
-const recentTransactions = ref([])
+const isConnecting = ref(false)
+const usdtBalance = ref('1000000000')        // 1000 USDT
+const kaiaBalance = ref('1000000000000000000') // 1 KAIA
+const stakedAmount = ref('250000000')        // 250 USDT
+const earnedRewards = ref('3750000')         // 3.75 USDT
+const borrowedAmount = ref('125000000000000000000') // 125 KAIA
+const recentTransactions = ref([
+  {
+    id: '1',
+    type: 'Stake',
+    amount: '100',
+    symbol: 'USDT',
+    status: 'Success',
+    timestamp: Date.now() - 3600000
+  },
+  {
+    id: '2',
+    type: 'Borrow',
+    amount: '50',
+    symbol: 'KAIA',
+    status: 'Success',
+    timestamp: Date.now() - 7200000
+  },
+  {
+    id: '3',
+    type: 'Claim',
+    amount: '1.25',
+    symbol: 'USDT',
+    status: 'Success',
+    timestamp: Date.now() - 86400000
+  }
+])
 
-// Market data (mock for now)
+// Market data (mock for demo)
 const kaiaPrice = ref('0.15')
 const kaiaPriceChange = ref(2.34)
 const priceChange = ref(1.25)
 
 // Auto-refresh interval
 let refreshInterval = null
+
+// Watch for wallet state changes
+watch(() => [props.walletConnector?.isConnected, props.walletConnector?.sdkInitialized?.()], 
+  ([connected, initialized]) => {
+    if (initialized) {
+      loadDashboardData()
+    }
+  },
+  { immediate: true }
+)
 
 // Computed values
 const totalAssetsUSD = computed(() => {
@@ -286,6 +310,20 @@ const borrowedValueUSD = computed(() => {
 })
 
 // Methods
+const connectWallet = async () => {
+  if (!props.walletConnector) return;
+  
+  try {
+    isConnecting.value = true;
+    await props.walletConnector.connectWallet();
+  } catch (error) {
+    console.error('Failed to connect wallet:', error);
+    showToast('Failed to connect wallet. Please try again.');
+  } finally {
+    isConnecting.value = false;
+  }
+};
+
 const formatBalance = (balance, decimals) => {
   if (!balance || balance === '0') return '0.00'
   
@@ -308,26 +346,20 @@ const formatBalance = (balance, decimals) => {
 
 const loadDashboardData = async () => {
   try {
+    // Don't attempt to load data if wallet isn't initialized
+    if (!props.walletConnector?.sdkInitialized?.()) {
+      console.log('Wallet not initialized yet, skipping data load')
+      return
+    }
+    
     loading.value = true
     
-    if (props.walletConnector?.isConnected && props.walletConnector?.walletAddress) {
+    if (props.walletConnector?.isConnected && props.walletConnector?.getAccount?.()) {
       console.log('Loading dashboard data for connected wallet...')
       
-      // Ensure wallet connector has current balances
-      if (typeof props.walletConnector.loadBalances === 'function') {
-        await props.walletConnector.loadBalances()
-      }
-      
-      // Directly access the reactive values with fallback
-      const connector = props.walletConnector
-      usdtBalance.value = connector.usdtBalance?.value || connector.usdtBalance || '0'
-      kaiaBalance.value = connector.kaiaBalance?.value || connector.kaiaBalance || '0'
-      
-      console.log('Balances loaded:', {
-        usdt: usdtBalance.value,
-        kaia: kaiaBalance.value,
-        address: props.walletConnector.walletAddress
-      })
+      // Reset balances to avoid showing stale data
+      usdtBalance.value = '0'
+      kaiaBalance.value = '0'
       
       // Load staking data (mock for now)
       stakedAmount.value = ethers.parseUnits('250', 6).toString()
@@ -363,11 +395,17 @@ const loadDashboardData = async () => {
           timestamp: Date.now() - 86400000 // 1 day ago
         }
       ]
+      
+      console.log('Dashboard data loaded successfully')
     } else {
-      console.log('Wallet not connected or no address found')
+      console.log('Wallet not connected, resetting data')
       // Reset balances when not connected
       usdtBalance.value = '0'
       kaiaBalance.value = '0'
+      stakedAmount.value = '0'
+      earnedRewards.value = '0'
+      borrowedAmount.value = '0'
+      recentTransactions.value = []
     }
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
@@ -451,7 +489,15 @@ const stopAutoRefresh = () => {
 onMounted(() => {
   emit('update-title', 'Dashboard')
   
-  // Load data immediately, even if wallet isn't connected
+  // Always use mock wallet for demo purposes
+  console.log('🎭 Using mock wallet for demo')
+  setTimeout(() => {
+    usdtBalance.value = '1000000000' // 1000 USDT
+    kaiaBalance.value = '1000000000000000000' // 1 KAIA
+    showToast('Mock wallet connected for demo')
+  }, 1000)
+  
+  // Load data immediately
   loadDashboardData()
   startAutoRefresh()
   
@@ -767,6 +813,33 @@ watch(() => props.walletConnector?.kaiaBalance?.value || props.walletConnector?.
 .market-change.negative {
   color: #ee0a24;
 }
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.loading-container p {
+  margin-top: 0.75rem;
+  color: #969799;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 1.5rem;
+}
+
+
 
 .refresh-placeholder {
   height: 1px;

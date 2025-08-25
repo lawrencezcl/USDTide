@@ -352,7 +352,7 @@ watch(() => props.liffId, () => {
 <style scoped>
 .liff-initializer {
   width: 100%;
-  height: 100vh;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -360,7 +360,7 @@ watch(() => props.liffId, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 60vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
@@ -399,7 +399,7 @@ watch(() => props.liffId, () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 60vh;
   padding: 2rem;
   text-align: center;
 }
