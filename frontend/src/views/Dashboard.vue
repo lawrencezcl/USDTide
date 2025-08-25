@@ -45,7 +45,7 @@
           <van-grid :column-num="2" :border="false" class="assets-grid">
             <van-grid-item>
               <div class="asset-item">
-                <img src="@/assets/usdt-icon.png" alt="USDT" class="asset-icon" />
+                <img src="@/assets/usdt-icon.svg" alt="USDT" class="asset-icon" />
                 <div class="asset-info">
                   <p class="asset-amount">{{ formatBalance(usdtBalance, 6) }}</p>
                   <p class="asset-symbol">USDT</p>
@@ -55,7 +55,7 @@
             
             <van-grid-item>
               <div class="asset-item">
-                <img src="@/assets/kaia-icon.png" alt="KAIA" class="asset-icon" />
+                <img src="@/assets/kaia-icon.svg" alt="KAIA" class="asset-icon" />
                 <div class="asset-info">
                   <p class="asset-amount">{{ formatBalance(kaiaBalance, 18) }}</p>
                   <p class="asset-symbol">KAIA</p>

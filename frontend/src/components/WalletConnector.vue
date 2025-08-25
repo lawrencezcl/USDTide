@@ -57,7 +57,7 @@
         <van-grid-item>
           <div class="balance-item">
             <div class="balance-icon">
-              <img src="@/assets/usdt-icon.png" alt="USDT" />
+              <img src="@/assets/usdt-icon.svg" alt="USDT" />
             </div>
             <div class="balance-info">
               <p class="balance-label">USDT Balance</p>
@@ -73,7 +73,7 @@
         <van-grid-item>
           <div class="balance-item">
             <div class="balance-icon">
-              <img src="@/assets/kaia-icon.png" alt="KAIA" />
+              <img src="@/assets/kaia-icon.svg" alt="KAIA" />
             </div>
             <div class="balance-info">
               <p class="balance-label">KAIA Balance</p>
@@ -229,26 +229,46 @@ const requestConnection = async () => {
       throw new Error('LIFF not initialized')
     }
 
-    // Check if ethereum is available
-    if (!window.ethereum) {
+    // Check for LINE Dapp Portal Wallet first
+    if (props.liff.ethereum) {
+      console.log('Using LINE Dapp Portal Wallet...')
+      const accounts = await props.liff.ethereum.request({
+        method: 'eth_requestAccounts'
+      })
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts found in LINE wallet')
+      }
+
+      walletAddress.value = accounts[0]
+      
+      // Initialize signer with LINE's ethereum provider
+      const provider = new ethers.BrowserProvider(props.liff.ethereum)
+      signer.value = await provider.getSigner()
+      
+    } else if (window.ethereum) {
+      // Fallback to regular browser wallet
+      console.log('Using browser wallet...')
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      })
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts found')
+      }
+
+      walletAddress.value = accounts[0]
+      
+      // Initialize signer
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      signer.value = await provider.getSigner()
+      
+    } else {
+      // No wallet available
       showPermissionDialog.value = true
       return
     }
 
-    // Request account access
-    const accounts = await window.ethereum.request({
-      method: 'eth_requestAccounts'
-    })
-
-    if (!accounts || accounts.length === 0) {
-      throw new Error('No accounts found')
-    }
-
-    walletAddress.value = accounts[0]
-    
-    // Initialize signer
-    signer.value = new ethers.BrowserProvider(window.ethereum).getSigner()
-    
     // Verify network
     await verifyNetwork()
     
@@ -323,7 +343,19 @@ const handlePermissionCancel = () => {
 // Verify network
 const verifyNetwork = async () => {
   try {
-    const network = await provider.value.getNetwork()
+    let currentProvider = null;
+    
+    // Use the actual wallet provider (LINE or browser)
+    if (props.liff && props.liff.ethereum) {
+      currentProvider = new ethers.BrowserProvider(props.liff.ethereum);
+    } else if (window.ethereum) {
+      currentProvider = new ethers.BrowserProvider(window.ethereum);
+    } else {
+      currentProvider = provider.value;
+    }
+    
+    const network = await currentProvider.getNetwork();
+    
     if (Number(network.chainId) !== config.chainId) {
       throw new Error(`Wrong network. Please switch to ${config.networkName}`)
     }
@@ -335,11 +367,22 @@ const verifyNetwork = async () => {
 // Initialize contracts
 const initializeContracts = () => {
   try {
-    if (!provider.value) return
+    let contractProvider = null;
+    
+    // Use signer for write operations, provider for read operations
+    if (signer.value) {
+      // If we have a signer (from LINE or browser wallet)
+      contractProvider = signer.value;
+    } else if (provider.value) {
+      // Fallback to RPC provider
+      contractProvider = provider.value;
+    } else {
+      return;
+    }
     
     contracts.value = {
-      usdt: new ethers.Contract(config.usdtAddress, ERC20_ABI, provider.value),
-      kaia: new ethers.Contract(config.kaiaAddress, ERC20_ABI, provider.value),
+      usdt: new ethers.Contract(config.usdtAddress, ERC20_ABI, contractProvider),
+      kaia: new ethers.Contract(config.kaiaAddress, ERC20_ABI, contractProvider),
       staking: null, // Will be initialized when needed
       lending: null  // Will be initialized when needed
     }
@@ -355,9 +398,23 @@ const loadBalances = async () => {
   try {
     loadingBalances.value = true
     
+    let balanceProvider = null;
+    
+    // Use the appropriate provider for balance queries
+    if (props.liff && props.liff.ethereum) {
+      balanceProvider = new ethers.BrowserProvider(props.liff.ethereum);
+    } else if (window.ethereum) {
+      balanceProvider = new ethers.BrowserProvider(window.ethereum);
+    } else {
+      balanceProvider = provider.value;
+    }
+    
+    // Get USDT contract with the correct provider
+    const usdtContract = new ethers.Contract(config.usdtAddress, ERC20_ABI, balanceProvider);
+    
     const [usdtBal, kaiaBal] = await Promise.all([
-      contracts.value.usdt.balanceOf(walletAddress.value),
-      provider.value.getBalance(walletAddress.value)
+      usdtContract.balanceOf(walletAddress.value),
+      balanceProvider.getBalance(walletAddress.value)
     ])
     
     usdtBalance.value = usdtBal.toString()

@@ -20,8 +20,12 @@ export default defineConfig({
       dts: true
     }),
     Components({
-      resolvers: [VantResolver()],
-      dts: true
+      resolvers: [VantResolver({
+        importStyle: true,
+        libraryName: 'vant'
+      })],
+      dts: true,
+      include: [/\.vue$/, /\.vue\?vue/]
     })
   ],
   resolve: {
@@ -61,13 +65,14 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    sourcemap: true,
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: {
-          'vendor': ['vue', 'vue-router', 'pinia'],
-          'ui': ['vant'],
-          'blockchain': ['ethers', '@line/liff']
+          vendor: ['vue', 'vue-router', 'pinia'],
+          ui: ['vant'],
+          blockchain: ['ethers', '@line/liff']
         }
       }
     },

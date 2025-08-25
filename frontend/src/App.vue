@@ -156,7 +156,7 @@ const { t, locale } = useI18n()
 
 // Environment configuration
 const liffId = import.meta.env.VITE_LIFF_ID || 'mock'
-const isDevelopment = import.meta.env.DEV
+const isDevelopment = import.meta.env.VITE_ENABLE_MOCK_MODE === 'true' || import.meta.env.DEV
 
 // Reactive state
 const activeTab = ref('dashboard')

@@ -161,13 +161,9 @@
             :value-class="getStatusClass(invitation.status)"
           >
             <template #icon>
-              <van-avatar 
-                :src="invitation.avatar" 
-                size="32"
-                class="invitation-avatar"
-              >
+              <div class="van-avatar van-avatar--round van-avatar--small invitation-avatar">
                 <van-icon name="user-o" v-if="!invitation.avatar" />
-              </van-avatar>
+              </div>
             </template>
             <template #right-icon>
               <van-tag 

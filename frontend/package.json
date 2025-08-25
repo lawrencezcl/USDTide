@@ -12,7 +12,9 @@
     "test:e2e:ci": "cypress run",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "vercel-build": "vite build",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@line/liff": "^2.23.0",

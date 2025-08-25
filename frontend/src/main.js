@@ -349,10 +349,10 @@ const i18n = createI18n({
 // Pinia store
 const pinia = createPinia()
 
-// Create Vue app
+// Create app and register components
 const app = createApp(App)
 
-// Register Vant components
+// Register Vant components globally
 app.use(Button)
 app.use(Card)
 app.use(Cell)

@@ -3,7 +3,7 @@
     <!-- Loading Screen -->
     <div v-if="isLoading" class="loading-screen">
       <div class="loading-content">
-        <img src="@/assets/logo.png" alt="USDTide" class="logo" />
+        <img src="@/assets/logo.svg" alt="USDTide" class="logo" />
         <h1 class="brand-title">USDTide</h1>
         <p class="brand-subtitle">Kaia Ecosystem DeFi Tool</p>
         <van-loading color="#1989fa" size="24px">Initializing...</van-loading>

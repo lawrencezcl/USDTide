@@ -70,3 +70,4 @@ yarn.lock
 # Local development
 .local/
 .cache/
+.vercel

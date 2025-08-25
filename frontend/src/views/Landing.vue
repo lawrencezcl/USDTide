@@ -4,7 +4,7 @@
     <div class="hero-section">
       <div class="hero-background">
         <div class="hero-content">
-          <img src="@/assets/logo.png" alt="USDTide" class="hero-logo" />
+          <img src="@/assets/logo.svg" alt="USDTide" class="hero-logo" />
           <h1 class="hero-title">USDTide</h1>
           <p class="hero-subtitle">
             Kaia Ecosystem DeFi Tool
