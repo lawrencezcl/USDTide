@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     LiffInitializer: typeof import('./src/components/LiffInitializer.vue')['default']
+    MiniDappWalletConnector: typeof import('./src/components/MiniDappWalletConnector.vue')['default']
     ReferralSystem: typeof import('./src/components/ReferralSystem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
@@ -20,6 +21,7 @@ declare module 'vue' {
     VanCell: typeof import('vant/es')['Cell']
     VanCellGroup: typeof import('vant/es')['CellGroup']
     VanCircle: typeof import('vant/es')['Circle']
+    VanCollapse: typeof import('vant/es')['Collapse']
     VanCollapseItem: typeof import('vant/es')['CollapseItem']
     VanDialog: typeof import('vant/es')['Dialog']
     VanDivider: typeof import('vant/es')['Divider']
@@ -46,5 +48,6 @@ declare module 'vue' {
     VanTabs: typeof import('vant/es')['Tabs']
     VanTag: typeof import('vant/es')['Tag']
     WalletConnector: typeof import('./src/components/WalletConnector.vue')['default']
+    WebApp: typeof import('./src/components/WebApp.vue')['default']
   }
 }

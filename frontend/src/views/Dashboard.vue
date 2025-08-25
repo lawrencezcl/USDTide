@@ -1,7 +1,20 @@
 <template>
   <div class="dashboard">
-    <!-- Transaction Monitor Component -->
-    <TransactionMonitor :wallet-connector="walletConnector" />
+    <div v-if="loading" class="loading-spinner">
+      <van-loading type="spinner" size="50px" />
+      <p>Loading dashboard...</p>
+    </div>
+    
+    <div v-else-if="!props.walletConnector?.isConnected" class="empty-state">
+      <van-empty
+        image="network"
+        description="Please connect your wallet to view dashboard"
+      />
+    </div>
+
+    <div v-else>
+      <!-- Transaction Monitor Component -->
+      <TransactionMonitor :wallet-connector="walletConnector" />
     
     <!-- Header Section -->
     <div class="header-section">
@@ -20,6 +33,17 @@
             height="50"
           />
         </div>
+      </div>
+      <div style="margin-top: 1rem; text-align: right;">
+        <van-button 
+          type="primary" 
+          size="small" 
+          @click="loadDashboardData"
+          :loading="loading"
+          icon="refresh"
+        >
+          Refresh
+        </van-button>
       </div>
     </div>
 
@@ -195,6 +219,7 @@
     <van-pull-refresh v-model="refreshing" @refresh="handleRefresh">
       <div class="refresh-placeholder"></div>
     </van-pull-refresh>
+    </div>
   </div>
 </template>
 
@@ -285,12 +310,24 @@ const loadDashboardData = async () => {
   try {
     loading.value = true
     
-    if (props.walletConnector?.isConnected) {
-      // Load wallet balances
-      await props.walletConnector.loadBalances()
+    if (props.walletConnector?.isConnected && props.walletConnector?.walletAddress) {
+      console.log('Loading dashboard data for connected wallet...')
       
-      usdtBalance.value = props.walletConnector.usdtBalance
-      kaiaBalance.value = props.walletConnector.kaiaBalance
+      // Ensure wallet connector has current balances
+      if (typeof props.walletConnector.loadBalances === 'function') {
+        await props.walletConnector.loadBalances()
+      }
+      
+      // Directly access the reactive values with fallback
+      const connector = props.walletConnector
+      usdtBalance.value = connector.usdtBalance?.value || connector.usdtBalance || '0'
+      kaiaBalance.value = connector.kaiaBalance?.value || connector.kaiaBalance || '0'
+      
+      console.log('Balances loaded:', {
+        usdt: usdtBalance.value,
+        kaia: kaiaBalance.value,
+        address: props.walletConnector.walletAddress
+      })
       
       // Load staking data (mock for now)
       stakedAmount.value = ethers.parseUnits('250', 6).toString()
@@ -326,6 +363,11 @@ const loadDashboardData = async () => {
           timestamp: Date.now() - 86400000 // 1 day ago
         }
       ]
+    } else {
+      console.log('Wallet not connected or no address found')
+      // Reset balances when not connected
+      usdtBalance.value = '0'
+      kaiaBalance.value = '0'
     }
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
@@ -410,16 +452,54 @@ onMounted(() => {
   emit('update-title', 'Dashboard')
   loadDashboardData()
   startAutoRefresh()
+  
+  // Add event listener for balance updates
+  if (props.walletConnector) {
+    const connector = props.walletConnector
+    if (connector.on) {
+      connector.on('balanceUpdated', handleBalanceUpdate)
+    }
+  }
 })
 
 onUnmounted(() => {
   stopAutoRefresh()
+  
+  // Remove event listener
+  if (props.walletConnector && props.walletConnector.off) {
+    props.walletConnector.off('balanceUpdated', handleBalanceUpdate)
+  }
 })
+
+// Handle balance updates from wallet connector
+const handleBalanceUpdate = (balanceData) => {
+  console.log('Balance update received:', balanceData)
+  usdtBalance.value = balanceData.usdt || '0'
+  kaiaBalance.value = balanceData.kaia || '0'
+}
 
 // Watch for wallet connection changes
 watch(() => props.walletConnector?.isConnected, (isConnected) => {
   if (isConnected) {
+    console.log('Wallet connection detected, loading dashboard data...')
     loadDashboardData()
+  } else {
+    console.log('Wallet disconnected, resetting balances...')
+    usdtBalance.value = '0'
+    kaiaBalance.value = '0'
+  }
+})
+
+// Watch for balance updates from wallet connector - use .value for refs
+watch(() => props.walletConnector?.usdtBalance?.value || props.walletConnector?.usdtBalance, (newBalance) => {
+  if (newBalance && newBalance !== '0') {
+    usdtBalance.value = newBalance
+  }
+})
+
+watch(() => props.walletConnector?.kaiaBalance?.value || props.walletConnector?.kaiaBalance, (newBalance) => {
+  if (newBalance && newBalance !== '0') {
+    kaiaBalance.value = newBalance
   }
 })
 </script>

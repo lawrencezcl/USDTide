@@ -91,23 +91,25 @@
     <!-- Permission Request Dialog -->
     <van-dialog
       v-model:show="showPermissionDialog"
-      title="Wallet Authorization Required"
+      title="LINE Wallet Authorization"
       :show-cancel-button="true"
-      confirm-button-text="Authorize"
+      confirm-button-text="Try Again"
       cancel-button-text="Cancel"
       @confirm="handlePermissionConfirm"
       @cancel="handlePermissionCancel"
     >
       <div class="permission-content">
         <van-icon name="shield-o" size="50" color="#1989fa" />
-        <p>USDTide needs access to your LINE Dapp Portal Wallet to:</p>
-        <ul>
-          <li>Check your USDT and KAIA balances</li>
-          <li>Execute staking and lending transactions</li>
-          <li>Display your transaction history</li>
-        </ul>
+        <p><strong>LINE Wallet Connection Failed</strong></p>
+        <p>Please follow these steps:</p>
+        <ol>
+          <li>Make sure you're using the LINE app</li>
+          <li>Tap "Try Again" below</li>
+          <li>When prompted, tap "Authorize" in the wallet dialog</li>
+          <li>Do not close the LINE app during authorization</li>
+        </ol>
         <p class="permission-note">
-          Your assets remain in your wallet. USDTide never has custody of your funds.
+          <van-icon name="info-o" size="16" /> Your funds remain secure in your wallet at all times.
         </p>
       </div>
     </van-dialog>
@@ -199,6 +201,28 @@ const contracts = ref({
 // Auto-refresh interval
 let refreshTimer = null
 
+// Check LINE wallet capabilities
+const checkLineWalletCapabilities = () => {
+  console.log('=== LINE Wallet Capabilities Check ===')
+  console.log('LIFF available:', !!props.liff)
+  
+  if (props.liff) {
+    console.log('LIFF version:', props.liff.getVersion())
+    console.log('LIFF isLoggedIn:', props.liff.isLoggedIn())
+    console.log('LIFF ethereum available:', !!props.liff.ethereum)
+    
+    if (props.liff.ethereum) {
+      console.log('Ethereum object type:', typeof props.liff.ethereum)
+      console.log('Ethereum object keys:', Object.keys(props.liff.ethereum))
+      console.log('Request method available:', typeof props.liff.ethereum.request)
+    }
+  }
+  
+  console.log('User agent:', navigator.userAgent)
+  console.log('Is LINE app:', navigator.userAgent.includes('Line/'))
+  console.log('=======================================') 
+}
+
 // Contract ABIs (minimal for balance checking)
 const ERC20_ABI = [
   'function balanceOf(address owner) view returns (uint256)',
@@ -224,27 +248,48 @@ const initializeProvider = () => {
 const requestConnection = async () => {
   try {
     isConnecting.value = true
+    checkLineWalletCapabilities()
 
     if (!props.liff) {
       throw new Error('LIFF not initialized')
     }
 
-    // Check for LINE Dapp Portal Wallet first
+    // LINE Dapp Portal Wallet - Priority 1
     if (props.liff.ethereum) {
-      console.log('Using LINE Dapp Portal Wallet...')
-      const accounts = await props.liff.ethereum.request({
-        method: 'eth_requestAccounts'
-      })
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts found in LINE wallet')
-      }
-
-      walletAddress.value = accounts[0]
+      console.log('🎯 Using LINE Dapp Portal Wallet')
       
-      // Initialize signer with LINE's ethereum provider
-      const provider = new ethers.BrowserProvider(props.liff.ethereum)
-      signer.value = await provider.getSigner()
+      try {
+        const accounts = await props.liff.ethereum.request({
+          method: 'eth_requestAccounts'
+        })
+
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts found in LINE wallet')
+        }
+
+        walletAddress.value = accounts[0]
+        console.log('✅ LINE wallet connected:', accounts[0])
+        
+        const provider = new ethers.BrowserProvider(props.liff.ethereum)
+        signer.value = await provider.getSigner()
+      } catch (authError) {
+        console.error('LINE wallet authorization failed:', authError)
+        
+        // Handle specific LINE authorization errors
+        if (authError.code === 4001 || authError.message?.includes('User denied')) {
+          console.log('🔄 Showing retry dialog for user denial')
+          showPermissionDialog.value = true
+          return
+        } else if (authError.code === -32002) {
+          console.log('🔄 Showing retry dialog for pending authorization')
+          showPermissionDialog.value = true
+          return
+        } else {
+          console.log('🔄 Showing retry dialog for connection error')
+          showPermissionDialog.value = true
+          return
+        }
+      }
       
     } else if (window.ethereum) {
       // Fallback to regular browser wallet
@@ -265,6 +310,7 @@ const requestConnection = async () => {
       
     } else {
       // No wallet available
+      console.log('❌ No wallet provider available')
       showPermissionDialog.value = true
       return
     }
@@ -303,15 +349,28 @@ const handlePermissionConfirm = async () => {
   showPermissionDialog.value = false
   
   try {
+    // Run diagnostics first
+    checkLineWalletCapabilities()
+    
     // For LINE Dapp Portal Wallet integration
     if (props.liff && props.liff.ethereum) {
+      console.log('🔄 Retrying LINE wallet authorization...')
+      console.log('LIFF ethereum object:', props.liff.ethereum)
+      console.log('Available methods:', Object.getOwnPropertyNames(props.liff.ethereum))
+      
+      // Force a fresh authorization request
       const accounts = await props.liff.ethereum.request({
         method: 'eth_requestAccounts'
       })
       
+      console.log('Authorization response:', accounts)
+      
       if (accounts && accounts.length > 0) {
         walletAddress.value = accounts[0]
-        signer.value = new ethers.BrowserProvider(props.liff.ethereum).getSigner()
+        console.log('✅ LINE wallet authorized:', accounts[0])
+        
+        const provider = new ethers.BrowserProvider(props.liff.ethereum)
+        signer.value = await provider.getSigner()
         
         await verifyNetwork()
         initializeContracts()
@@ -326,12 +385,31 @@ const handlePermissionConfirm = async () => {
         })
         
         showToast('Wallet connected successfully')
+      } else {
+        console.error('No accounts returned from LINE wallet')
+        showToast('No accounts found. Please ensure your LINE wallet is set up.')
+        showPermissionDialog.value = true
       }
     } else {
+      console.error('LINE Dapp Portal Wallet not available')
+      console.log('LIFF object:', props.liff)
       showToast('LINE Dapp Portal Wallet not available')
     }
   } catch (error) {
-    handleError(error)
+    console.error('Permission dialog authorization failed:', error)
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      stack: error.stack
+    })
+    
+    // Show the dialog again for retry
+    if (error.code === 4001 || error.message?.includes('User denied')) {
+      showToast('Authorization cancelled. Please try again.')
+      showPermissionDialog.value = true
+    } else {
+      handleError(error)
+    }
   }
 }
 
@@ -539,18 +617,28 @@ const executeTransaction = async (transaction, description = 'Transaction') => {
 
 // Handle errors
 const handleError = (error) => {
+  console.error('=== Wallet Error Debug ===', error)
   let message = 'An error occurred'
   
-  if (error.code === 'ACTION_REJECTED') {
-    message = 'Transaction cancelled by user'
+  if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
+    message = 'Authorization cancelled by user'
   } else if (error.code === 'INSUFFICIENT_FUNDS') {
     message = 'Insufficient funds for transaction'
   } else if (error.code === 'NETWORK_ERROR') {
     message = 'Network error. Please check your connection.'
+  } else if (error.code === -32002) {
+    message = 'Authorization request already pending. Please check your wallet.'
+  } else if (error.code === -32603) {
+    message = 'Internal wallet error. Please try again.'
+  } else if (error.message && error.message.includes('User denied')) {
+    message = 'Authorization denied by user'
+  } else if (error.message && error.message.includes('already pending')) {
+    message = 'Authorization request already pending'
   } else if (error.message) {
     message = error.message
   }
   
+  console.log('Error message shown to user:', message)
   emit('error', error)
   showToast(message)
 }
@@ -579,7 +667,16 @@ defineExpose({
 onMounted(() => {
   initializeProvider()
   
-  if (props.autoConnect && props.liff) {
+  // Enhanced LINE detection and auto-connection
+  const isLineEnvironment = props.liff && props.liff.ethereum
+  
+  if (isLineEnvironment) {
+    console.log('🎯 LINE Dapp Portal detected, auto-connecting...')
+    // Small delay to ensure LIFF is fully ready
+    setTimeout(() => {
+      requestConnection()
+    }, 1000)
+  } else if (props.autoConnect && props.liff) {
     requestConnection()
   }
 })

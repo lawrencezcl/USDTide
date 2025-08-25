@@ -33,10 +33,12 @@
 
           <!-- Main Content -->
           <div class="main-content" :class="{ 'with-navbar': showNavBar }">
-            <!-- Wallet Connector -->
-            <WalletConnector
+            <!-- Mini Dapp Wallet Connector -->
+            <MiniDappWalletConnector
               ref="walletConnector"
               :liff="liff"
+              :client-id="miniDappClientId"
+              :chain-id="chainId"
               :auto-connect="isLoggedIn"
               @connected="handleWalletConnected"
               @disconnected="handleWalletDisconnected"
@@ -147,7 +149,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showToast, showDialog, showConfirmDialog } from 'vant'
 import LiffInitializer from '@/components/LiffInitializer.vue'
-import WalletConnector from '@/components/WalletConnector.vue'
+import MiniDappWalletConnector from '@/components/MiniDappWalletConnector.vue'
 
 // Router and i18n
 const router = useRouter()
@@ -156,6 +158,8 @@ const { t, locale } = useI18n()
 
 // Environment configuration
 const liffId = import.meta.env.VITE_LIFF_ID || 'mock'
+const miniDappClientId = import.meta.env.VITE_MINI_DAPP_CLIENT_ID || 'demo-client-id'
+const chainId = import.meta.env.VITE_CHAIN_ID || '1001'
 const isDevelopment = import.meta.env.VITE_ENABLE_MOCK_MODE === 'true' || import.meta.env.DEV
 
 // Reactive state

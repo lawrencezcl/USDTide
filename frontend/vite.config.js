@@ -7,7 +7,8 @@ import { VantResolver } from 'unplugin-vue-components/resolvers'
 // import eslint from 'vite-plugin-eslint'
 import autoprefixer from 'autoprefixer'
 
-export default defineConfig({
+export default defineConfig(({ command, mode }) => {
+  return {
   plugins: [
     vue(),
     // eslint(),
@@ -67,12 +68,15 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html')
+      },
       external: [],
       output: {
         manualChunks: {
           vendor: ['vue', 'vue-router', 'pinia'],
           ui: ['vant'],
-          blockchain: ['ethers', '@line/liff']
+          blockchain: ['ethers', '@line/liff', '@linenext/dapp-portal-sdk']
         }
       }
     },
@@ -85,6 +89,7 @@ export default defineConfig({
       'pinia',
       'vant',
       'ethers',
+      '@linenext/dapp-portal-sdk',
       '@line/liff',
       'axios',
       'dayjs'
@@ -92,6 +97,8 @@ export default defineConfig({
   },
   define: {
     __VUE_OPTIONS_API__: true,
-    __VUE_PROD_DEVTOOLS__: false
+    __VUE_PROD_DEVTOOLS__: false,
+    __BUILD_TARGET__: JSON.stringify('liff')
+  }
   }
 })
