@@ -1,33 +1,36 @@
 <template>
   <div class="liff-initializer">
-    <!-- Loading Screen -->
-    <div v-if="isLoading" class="loading-screen">
+    <!-- Loading Screen - Only show briefly, then proceed -->
+    <div v-if="isLoading && !hasInitialized" class="loading-screen">
       <div class="loading-content">
         <img src="@/assets/logo.svg" alt="USDTide" class="logo" />
         <h1 class="brand-title">USDTide</h1>
         <p class="brand-subtitle">Kaia Ecosystem DeFi Tool</p>
-        <van-loading color="#1989fa" size="24px">Initializing...</van-loading>
+        <van-loading color="#1989fa" size="24px">Loading...</van-loading>
       </div>
     </div>
 
-    <!-- Error Screen -->
-    <div v-else-if="error" class="error-screen">
-      <van-empty description="Initialization Failed">
+    <!-- Error Screen - Non-blocking, show as notification -->
+    <div v-else-if="error && !hasInitialized" class="error-screen">
+      <van-empty description="LINE Login Optional">
         <template #image>
-          <van-icon name="warning-o" size="100" color="#ee0a24" />
+          <van-icon name="user-o" size="100" color="#1989fa" />
         </template>
       </van-empty>
       <div class="error-content">
         <h3>{{ error.title }}</h3>
         <p>{{ error.message }}</p>
-        <van-button type="primary" @click="retry" :loading="isRetrying">
-          Retry
+        <van-button type="primary" @click="skipLogin" :loading="isRetrying">
+          Continue Without LINE Login
+        </van-button>
+        <van-button plain type="primary" @click="retry" :loading="isRetrying" style="margin-top: 10px;">
+          Retry Login
         </van-button>
       </div>
     </div>
 
-    <!-- Success - Render Children -->
-    <div v-else class="liff-ready">
+    <!-- Always render children, even if LIFF fails -->
+    <div class="liff-ready">
       <slot :liff="liff" :user="user" :isLoggedIn="isLoggedIn" />
     </div>
   </div>
@@ -60,8 +63,9 @@ const error = ref(null)
 const isLoggedIn = ref(false)
 const user = ref(null)
 const liffInstance = ref(null)
+const hasInitialized = ref(false)
 
-// LIFF initialization
+// LIFF initialization - Non-blocking
 const initializeLiff = async () => {
   try {
     isLoading.value = true
@@ -95,44 +99,44 @@ const initializeLiff = async () => {
   } catch (err) {
     console.error('LIFF initialization failed:', err)
     
-    // Handle different error types
-    if (err.code === 'INVALID_ARGUMENT') {
-      error.value = {
-        title: 'Configuration Error',
-        message: 'Invalid LIFF ID. Please contact support.'
-      }
-    } else if (err.code === 'FORBIDDEN') {
-      error.value = {
-        title: 'Access Denied',
-        message: 'This app is not available in your region.'
-      }
-    } else if (err.code === 'NETWORK_ERROR') {
-      error.value = {
-        title: 'Network Error',
-        message: 'Please check your internet connection and try again.'
-      }
-    } else {
-      error.value = {
-        title: 'Initialization Failed',
-        message: 'Failed to initialize LINE login. Please try again.'
-      }
+    // Don't show blocking error, just log and proceed
+    console.warn('LIFF initialization failed, proceeding without LINE login')
+    
+    // Provide a minimal LIFF instance for compatibility
+    liffInstance.value = {
+      isLoggedIn: () => false,
+      login: () => {
+        if (props.liffId && props.liffId !== 'mock') {
+          console.warn('Cannot login via LINE - LIFF not initialized')
+        }
+      },
+      logout: () => Promise.resolve(),
+      getProfile: () => Promise.resolve(null),
+      sendMessages: () => Promise.resolve(),
+      openWindow: (url) => window.open(url, '_blank'),
+      closeWindow: () => window.close(),
+      isInClient: () => false,
+      isApiAvailable: () => false
     }
     
-    emit('error', error.value)
+    // Emit ready with minimal LIFF instance
+    emit('ready', liffInstance.value)
+    
   } finally {
     isLoading.value = false
     isRetrying.value = false
+    hasInitialized.value = true
   }
 }
 
-// Mock initialization for development
+// Mock initialization for development - Quick
 const initializeMock = async () => {
   try {
     isLoading.value = true
     error.value = null
 
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // Quick mock setup
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Mock user data
     user.value = {
@@ -161,14 +165,23 @@ const initializeMock = async () => {
     emit('ready', liffInstance.value)
     
   } catch (err) {
-    error.value = {
-      title: 'Mock Error',
-      message: 'Development mock initialization failed.'
+    // Skip mock error, just proceed
+    liffInstance.value = {
+      isLoggedIn: () => false,
+      login: () => Promise.resolve(),
+      logout: () => Promise.resolve(),
+      getProfile: () => Promise.resolve(null),
+      sendMessages: () => Promise.resolve(),
+      openWindow: (url) => window.open(url, '_blank'),
+      closeWindow: () => window.close(),
+      isInClient: () => false,
+      isApiAvailable: () => false
     }
-    emit('error', error.value)
+    emit('ready', liffInstance.value)
   } finally {
     isLoading.value = false
     isRetrying.value = false
+    hasInitialized.value = true
   }
 }
 
@@ -180,6 +193,29 @@ const retry = async () => {
   } else {
     await initializeLiff()
   }
+}
+
+// Skip login and proceed
+const skipLogin = async () => {
+  isLoading.value = false
+  isRetrying.value = false
+  hasInitialized.value = true
+  
+  // Provide minimal LIFF instance
+  liffInstance.value = {
+    isLoggedIn: () => false,
+    login: () => Promise.resolve(),
+    logout: () => Promise.resolve(),
+    getProfile: () => Promise.resolve(null),
+    sendMessages: () => Promise.resolve(),
+    openWindow: (url) => window.open(url, '_blank'),
+    closeWindow: () => window.close(),
+    isInClient: () => false,
+    isApiAvailable: () => false
+  }
+  
+  emit('ready', liffInstance.value)
+  emit('logout')
 }
 
 // Login function

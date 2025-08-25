@@ -1,11 +1,11 @@
 <template>
   <div class="dashboard">
-    <div v-if="loading" class="loading-spinner">
+    <div v-if="loading && !props.walletConnector?.isConnected" class="loading-spinner">
       <van-loading type="spinner" size="50px" />
       <p>Loading dashboard...</p>
     </div>
     
-    <div v-else-if="!props.walletConnector?.isConnected" class="empty-state">
+    <div v-if="!props.walletConnector?.isConnected" class="empty-state">
       <van-empty
         image="network"
         description="Please connect your wallet to view dashboard"
@@ -22,7 +22,7 @@
         <div class="welcome-content">
           <h2>{{ $t('nav.dashboard') }}</h2>
           <p class="welcome-text">
-            Welcome back, {{ user?.displayName || 'User' }}!
+            Welcome{{ user?.displayName ? ` back, ${user.displayName}` : ' to USDTide' }}!
           </p>
         </div>
         <div class="welcome-icon">
@@ -450,6 +450,8 @@ const stopAutoRefresh = () => {
 // Lifecycle
 onMounted(() => {
   emit('update-title', 'Dashboard')
+  
+  // Load data immediately, even if wallet isn't connected
   loadDashboardData()
   startAutoRefresh()
   

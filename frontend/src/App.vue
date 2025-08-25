@@ -1,145 +1,144 @@
 <template>
   <div id="app">
-    <!-- LIFF Initializer -->
-    <LiffInitializer
-      :liff-id="liffId"
-      :mock-login="isDevelopment"
-      @ready="handleLiffReady"
-      @login="handleLogin"
-      @logout="handleLogout"
-      @error="handleLiffError"
-    >
-      <template #default="{ liff, user, isLoggedIn }">
-        <!-- Main App Content -->
-        <div class="app-container">
-          <!-- Navigation Bar -->
-          <van-nav-bar
-            v-if="showNavBar"
-            :title="currentPageTitle"
-            left-arrow
-            @click-left="handleBack"
-            :fixed="true"
-            :z-index="100"
-          >
-            <template #right>
-              <van-icon
-                v-if="isLoggedIn"
-                name="user-o"
-                size="18"
-                @click="showUserMenu = true"
-              />
-            </template>
-          </van-nav-bar>
-
-          <!-- Main Content -->
-          <div class="main-content" :class="{ 'with-navbar': showNavBar }">
-            <!-- Mini Dapp Wallet Connector -->
-            <MiniDappWalletConnector
-              ref="walletConnector"
-              :liff="liff"
-              :client-id="miniDappClientId"
-              :chain-id="chainId"
-              :auto-connect="isLoggedIn"
-              @connected="handleWalletConnected"
-              @disconnected="handleWalletDisconnected"
-              @error="handleWalletError"
-            />
-
-            <!-- Router View -->
-            <router-view
-              :liff="liff"
-              :user="user"
-              :is-logged-in="isLoggedIn"
-              :wallet-connector="walletConnector"
-              @update-title="updatePageTitle"
-            />
-          </div>
-
-          <!-- Bottom Navigation -->
-          <van-tabbar
-            v-if="isLoggedIn && showTabbar"
-            v-model="activeTab"
-            :fixed="true"
-            :z-index="100"
-            @change="handleTabChange"
-          >
-            <van-tabbar-item name="dashboard" icon="home-o">
-              {{ $t('nav.dashboard') }}
-            </van-tabbar-item>
-            <van-tabbar-item name="staking" icon="gold-coin-o">
-              {{ $t('nav.staking') }}
-            </van-tabbar-item>
-            <van-tabbar-item name="lending" icon="credit-pay">
-              {{ $t('nav.lending') }}
-            </van-tabbar-item>
-            <van-tabbar-item name="profile" icon="user-o">
-              {{ $t('nav.profile') }}
-            </van-tabbar-item>
-          </van-tabbar>
-
-          <!-- User Menu Popup -->
-          <van-popup
-            v-model:show="showUserMenu"
-            position="top"
-            :style="{ height: '40%' }"
-          >
-            <div class="user-menu">
-              <div class="user-header">
-                <van-image
-                  :src="user?.pictureUrl || '/default-avatar.png'"
-                  round
-                  width="60"
-                  height="60"
-                />
-                <h3>{{ user?.displayName || 'User' }}</h3>
-                <p>{{ user?.statusMessage || '' }}</p>
-              </div>
-              
-              <van-cell-group>
-                <van-cell
-                  title="Language / 언어"
-                  :value="currentLanguage"
-                  is-link
-                  @click="showLanguageSelector = true"
-                />
-                <van-cell
-                  title="Settings"
-                  is-link
-                  @click="goToSettings"
-                />
-                <van-cell
-                  title="Help & Support"
-                  is-link
-                  @click="openSupport"
-                />
-                <van-cell
-                  title="Logout"
-                  @click="handleLogoutClick"
-                  class="logout-cell"
-                />
-              </van-cell-group>
-            </div>
-          </van-popup>
-
-          <!-- Language Selector -->
-          <van-action-sheet
-            v-model:show="showLanguageSelector"
-            :actions="languageActions"
-            @select="handleLanguageSelect"
-            cancel-text="Cancel"
+    <!-- Main App Content -->
+    <div class="app-container">
+      <!-- Navigation Bar -->
+      <van-nav-bar
+        v-if="showNavBar"
+        :title="currentPageTitle"
+        left-arrow
+        @click-left="handleBack"
+        :fixed="true"
+        :z-index="100"
+      >
+        <template #right>
+          <van-icon
+            v-if="isLoggedIn"
+            name="user-o"
+            size="18"
+            @click="showUserMenu = true"
           />
+        </template>
+      </van-nav-bar>
 
-          <!-- Global Loading -->
-          <van-overlay :show="globalLoading">
-            <div class="global-loading">
-              <van-loading size="30px" color="#ffffff">
-                {{ loadingMessage }}
-              </van-loading>
-            </div>
-          </van-overlay>
+      <!-- Main Content -->
+      <div class="main-content" :class="{ 'with-navbar': showNavBar }">
+        <!-- LIFF Initializer (non-blocking) -->
+        <LiffInitializer
+          :liff-id="liffId"
+          :mock-login="isDevelopment"
+          @ready="handleLiffReady"
+          @login="handleLogin"
+          @logout="handleLogout"
+          @error="handleLiffError"
+        />
+
+        <!-- Mini Dapp Wallet Connector -->
+        <MiniDappWalletConnector
+          ref="walletConnector"
+          :liff="liff"
+          :client-id="miniDappClientId"
+          :chain-id="chainId"
+          :auto-connect="isLoggedIn"
+          @connected="handleWalletConnected"
+          @disconnected="handleWalletDisconnected"
+          @error="handleWalletError"
+        />
+
+        <!-- Router View -->
+        <router-view
+          :liff="liff"
+          :user="user"
+          :is-logged-in="isLoggedIn"
+          :wallet-connector="walletConnector"
+          @update-title="updatePageTitle"
+        />
+      </div>
+
+      <!-- Bottom Navigation -->
+      <van-tabbar
+        v-if="showTabbar"
+        v-model="activeTab"
+        :fixed="true"
+        :z-index="100"
+        @change="handleTabChange"
+      >
+        <van-tabbar-item name="dashboard" icon="home-o">
+          {{ $t('nav.dashboard') }}
+        </van-tabbar-item>
+        <van-tabbar-item name="staking" icon="gold-coin-o">
+          {{ $t('nav.staking') }}
+        </van-tabbar-item>
+        <van-tabbar-item name="lending" icon="credit-pay">
+          {{ $t('nav.lending') }}
+        </van-tabbar-item>
+        <van-tabbar-item name="profile" icon="user-o">
+          {{ $t('nav.profile') }}
+        </van-tabbar-item>
+      </van-tabbar>
+
+      <!-- User Menu Popup -->
+      <van-popup
+        v-model:show="showUserMenu"
+        position="top"
+        :style="{ height: '40%' }"
+      >
+        <div class="user-menu">
+          <div class="user-header">
+            <van-image
+              :src="user?.pictureUrl || '/default-avatar.png'"
+              round
+              width="60"
+              height="60"
+            />
+            <h3>{{ user?.displayName || 'User' }}</h3>
+            <p>{{ user?.statusMessage || '' }}</p>
+          </div>
+          
+          <van-cell-group>
+            <van-cell
+              title="Language / 언어"
+              :value="currentLanguage"
+              is-link
+              @click="showLanguageSelector = true"
+            />
+            <van-cell
+              title="Settings"
+              is-link
+              @click="goToSettings"
+            />
+            <van-cell
+              title="Help & Support"
+              is-link
+              @click="openSupport"
+            />
+            <van-cell
+              v-if="isLoggedIn"
+              title="Logout"
+              @click="handleLogoutClick"
+              class="logout-cell"
+            />
+          </van-cell-group>
         </div>
-      </template>
-    </LiffInitializer>
+      </van-popup>
+
+      <!-- Language Selector -->
+      <van-action-sheet
+        v-model:show="showLanguageSelector"
+        :actions="languageActions"
+        @select="handleLanguageSelect"
+        cancel-text="Cancel"
+      />
+
+      <!-- Global Loading -->
+      <van-overlay :show="globalLoading">
+        <div class="global-loading">
+          <van-loading size="30px" color="#ffffff">
+            {{ loadingMessage }}
+          </van-loading>
+        </div>
+      </van-overlay>
+    </div>
   </div>
 </template>
 
